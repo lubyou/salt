@@ -56,22 +56,15 @@ def get_cert_serial(cert_file):
 
     cn_count = 0
     for line in out.splitlines():
-        line = line.strip()
-
-        if not line:
-            continue
-
         if "CN" in line:
             cn_count += 1
 
-        elif cn_count > 2 and ":" in line:
-            line = line.split()
-
-            if len(line) == 2:
-                serial = line[-1].strip()
-
-                if serial:
-                    return serial
+        elif cn_count == 2:
+            match = re.match(r'^\w+.*:(.+)', line)
+            if match:
+                serial = match.groups()[0].strip()
+                print serial
+                break
 
     return None
 
