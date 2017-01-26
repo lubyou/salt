@@ -39,11 +39,42 @@ def get_cert_serial(cert_file):
     '''
     cmd = "certutil.exe -verify {0}".format(cert_file)
     out = __salt__['cmd.run'](cmd)
-    matches = re.search(r"Serial: (.*)", out)
-    if matches is not None:
-        return matches.groups()[0].strip()
-    else:
-        return None
+
+
+    """
+    Émetteur:
+        CN=Google Internet Authority G2
+        O=Google Inc
+        C=US
+    Objet:
+        CN=*.google.com
+        O=Google Inc
+        L=Mountain View
+        S=California
+        C=US
+    Numéro de série du certificat : 76385ee42745b0cd
+    """
+
+    cn_count = 0
+    for line in out.splitlines():
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if "CN" in line:
+            cn_count += 1
+
+        elif cn_count > 2 and ":" in line:
+            line = line.split()
+
+            if len(line) == 2:
+                serial = line[-1].strip()
+
+                if serial:
+                    return serial
+
+    return None
 
 
 def get_stored_cert_serials(store):
@@ -56,7 +87,38 @@ def get_stored_cert_serials(store):
     '''
     cmd = "certutil.exe -store {0}".format(store)
     out = __salt__['cmd.run'](cmd)
-    matches = re.findall(r"Serial Number: (.*)\r", out)
+
+    """
+    Root
+    ================ Certificat 0 ================
+    Numéro de série : 79ad16a14aa0a5ad4c7358f407132e65
+    Émetteur: CN=Microsoft Root Certificate Authority, DC=microsoft, DC=com
+     NotBefore : 10/05/2001 00:19
+     NotAfter : 10/05/2021 00:28
+    Objet: CN=Microsoft Root Certificate Authority, DC=microsoft, DC=com
+    Version de l’autorité de certification: V0.0
+    La signature correspond à la clé publique
+    Certificat racine : le sujet correspond à l’émetteur
+    Modèle:
+    Hach. cert. (sha1) : cd d4 ee ae 60 00 ac 7f 40 c3 80 2c 17 1e 30 14 80 30 c0 72
+    Aucune information sur le fournisseur de clé
+    Impossible de trouver le certificat et la clé privée pour le déchiffrement.
+
+    ================ Certificat 1 ================
+    Numéro de série : 00
+    Émetteur: CN=Thawte Timestamping CA, OU=Thawte Certification, O=Thawte, L=Durbanville, S=Western Cape, C=ZA
+     NotBefore : 01/01/1997 01:00
+     NotAfter : 01/01/2021 00:59
+    Objet: CN=Thawte Timestamping CA, OU=Thawte Certification, O=Thawte, L=Durbanville, S=Western Cape, C=ZA
+    La signature correspond à la clé publique
+    Certificat racine : le sujet correspond à l’émetteur
+    Modèle:
+    Hach. cert. (sha1) : be 36 a4 56 2f b2 ee 05 db b3 d3 23 23 ad f4 45 08 4e d6 56
+    Aucune information sur le fournisseur de clé
+    Impossible de trouver le certificat et la clé privée pour le déchiffrement.
+    """
+
+    matches = re.findall(r"================.*================\n.*: (.*)", out)
     return matches
 
 
