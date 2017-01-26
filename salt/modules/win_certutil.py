@@ -40,7 +40,6 @@ def get_cert_serial(cert_file):
     cmd = "certutil.exe -verify {0}".format(cert_file)
     out = __salt__['cmd.run'](cmd)
 
-
     """
     Émetteur:
         CN=Google Internet Authority G2
@@ -118,8 +117,8 @@ def get_stored_cert_serials(store):
     Impossible de trouver le certificat et la clé privée pour le déchiffrement.
     """
 
-    matches = re.findall(r"================.*================\n.*: (.*)", out)
-    return matches
+    pattern = r"================.*================\n.*: (.*)\n.\w+.*:.*=.*"
+    return re.findall(pattern, out)
 
 
 def add_store(source, store, saltenv='base'):
